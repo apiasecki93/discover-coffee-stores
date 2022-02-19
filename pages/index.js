@@ -23,7 +23,7 @@ export async function getStaticProps(context) { // get static properties is a fu
   console.log(coffeeStores, 'index.js line 22 coffeeStores') 
   return {
         props: {
-            coffeeStores:  coffeeStores, //coffeStores as a key and also as a value
+          coffeeStores:  coffeeStores, //coffeStores as a key and as a value
         }, //will be passed to the pge component as props
     }
 }
@@ -46,8 +46,10 @@ export default function Home(props) {
     (async () => {
       if(latLong) {
         try {
+          
           const fetchedCoffeeStores = await fetchCoffeeStores(latLong, 30);
-          console.log({fetchedCoffeStores}, 'fetchedCoffeeStores')
+          console.log( 'fetchedCoffeeStores at index.js line 51', {fetchedCoffeeStores},)
+          
           //set coffee stores
           //setCoffeeStores(fetchedCoffeeStores)
           dispatch({
