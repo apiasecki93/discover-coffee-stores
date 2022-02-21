@@ -20,12 +20,10 @@ export async function getStaticProps(context) { // get static properties is a fu
   //console.log("THIS WILL BE PRINTED ONLY AT SERWER SITE BY NODE.JS")
  
   const coffeeStores = await fetchCoffeeStores(); 
-  console.log(coffeeStores, 'index.js line 22 coffeeStores') 
+  console.log(coffeeStores, 'index.js line 23 coffeeStores') 
   return {
-        props: {
-          coffeeStores:  coffeeStores, //coffeStores as a key and as a value
-        }, //will be passed to the pge component as props
-    }
+    props: { coffeeStores: coffeeStores },
+  }; // will be passed to the page as props
 }
 
 
@@ -39,11 +37,11 @@ export default function Home(props) {
   const { dispatch, state } = useContext(StoreContext)
 
   const { coffeeStores, latLong } = state
-
-  
+  console.log(coffeeStores, latLong , 'index.js line 42 coffeeStores')
+  console.log(props , 'props passed from getStaticProps at index.js line 41')
   useEffect( () => {
     //self invoke async function
-    (async () => {
+    const setCoffeeStoresByLocation = async () => {
       if(latLong) {
         try {
           
@@ -57,13 +55,14 @@ export default function Home(props) {
             payload: {
               coffeeStores: fetchedCoffeeStores,
             },
-          })
+          });
         } catch (error) {
          // console.log({error})
          setCoffeeStoresError(error.message)
         }
       }
-    })()
+    };
+    setCoffeeStoresByLocation();
   }, [latLong, dispatch])
 
   const handleOnBannerBtnClick = () => { 
@@ -105,24 +104,27 @@ export default function Home(props) {
         </div>  }
 
 
-       {props.coffeeStores.length > 0 &&
-       <div className={styles.sectionWrapper}> {/* <> </> <=== satisfied react condition about root element for hmlt */}
-          <h2 className={styles.heading2}>Boxtel stores</h2>
-          <div className={styles.cardLayout}>
-            {props.coffeeStores.map((coffeeStore) => {
-              return (
-                <Card 
-                  // className={styles.card}
-                  key={coffeeStore.id} 
-                  name={coffeeStore.name} 
-                  imgUrl={coffeeStore.imgUrl || 'https://images.unsplash.com/photo-1498804103079-a6351b050096?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2468&q=80'}
-                  href={`/coffee-store/${coffeeStore.id}`}
-              />
-              )
-            })}
+        {props.coffeeStores.length > 0 && (
+          <div className={styles.sectionWrapper}>
+            <h2 className={styles.heading2}>Toronto stores</h2>
+            <div className={styles.cardLayout}>
+              {props.coffeeStores.map((coffeeStore) => {
+                return (
+                  <Card
+                    key={coffeeStore.id}
+                    name={coffeeStore.name}
+                    imgUrl={
+                      coffeeStore.imgUrl ||
+                      "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
+                    }
+                    href={`/coffee-store/${coffeeStore.id}`}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>  }
+        )}
       </main>
     </div>
-  )
+  );
 }

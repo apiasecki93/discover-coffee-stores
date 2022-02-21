@@ -11,103 +11,235 @@ import styles from "./coffe-store.module.css"
 import cls from 'classnames'
 
 import { fetchCoffeeStores } from "../../lib/coffee-stores"
+import { StoreContext } from '../_app'
+import {useContext, useState, useEffect} from 'react'
+import { isEmpty } from "../../utils";
 
 
 
-export async function getStaticProps(staticProps) { //getStaticProps for an individual page, in this case selected coffe link from index will return for current restaturant
-    const params = staticProps.params; // alternativly we could destructure params from staticProps with getStaticProps({params})
-    //console.log(params)
+export async function getStaticProps(staticProps) {
+  const params = staticProps.params;
+  console.log("params");
+  console.log(params);
 
-    const  coffeeStores = await fetchCoffeeStores();
-    const findCoffeeStoreById = coffeeStores.find((coffeeStore) => {
-        return coffeeStore.id.toString() === params.id//<params.id> dynamic id from staticProps.params
-    });
-    return {
-        props: {
-            coffeeStore: findCoffeeStoreById ? findCoffeeStoreById : {},
-        },
-  }
+  const coffeeStores = await fetchCoffeeStores();
+  const findCoffeeStoreById = coffeeStores.find((coffeeStore) => {
+    return coffeeStore.fsq_id.toString() === params.id; //dynamic [id]
+  });
+  return {
+    props: {
+      coffeeStore: findCoffeeStoreById ? findCoffeeStoreById : {},
+    },
+  };
 }
 
-export async function getStaticPaths() { // this function is for getting paths for all pages, in this case we have only one page, so we return only one path
-    // first example with hard coded params, in second example we will make dynamic params
-        // return {
-        //     paths: [
-        //         // { params: { id: "0" } },
-        //         // { params: { id: "1" } },
-        //         // { params: {id: '300'} },
-        //     ],  //params are commented because falback is tru and that why I'm using if statment with router.isFallback to display "loading.." data 
-        //     fallback: true,
-        // }
-
-        //dynamic params example
-    const  coffeeStores = await fetchCoffeeStores();
-
-    const paths = coffeeStores.map((coffeeStore) => {
-        return {
-            params: {
-                id: coffeeStore.id.toString(),
-            },
-        };
-    });
+export async function getStaticPaths() {
+  console.log("STep getStaticPaths");
+  const coffeeStores = await fetchCoffeeStores();
+  // console.log(coffeeStores);
+  const paths = coffeeStores.map((coffeeStore) => {
     return {
-        paths,
-        fallback: true,
+      params: { id: coffeeStore.fsq_id.toString() },
     };
+  });
+  return {
+    // paths: [{ params: { id: "0" } }, { params: { id: "1" } }],
+    paths,
+    // no 404 page
+    fallback: true,
+  };
 }
 
-export default function CoffeeStore(props) {
-    const router = useRouter()
-    //console.log(router)
-    
-    if (router.isFallback) {
-        return <div>Loading</div>
+const CoffeeStore = (initialProps) => {
+  const router = useRouter();
+
+  const fsq_id = router.query.id;
+  console.log({ fsq_id });
+
+  // get props from intialProps and the found ones
+
+  // console.log({ coffeeStore });
+
+  const [coffeeStore, setCoffeeStore] = useState(initialProps.coffeeStore);
+  const {
+    state: { coffeeStores },
+  } = useContext(StoreContext);
+
+  const [votingCount, setVotingCount] = useState(1);
+
+  const handleUpvoteButton = () => {
+    console.log("upvoted");
+    let count = votingCount + 1;
+    setVotingCount(count);
+  };
+
+  const handleCreateCoffeeStore = async (coffeeStore) => {
+    try {
+      console.log("coffeeStore");
+      console.log(coffeeStore);
+      const { fsq_id, name, voting, location, imgUrl, neighborhood, address } =
+        coffeeStore;
+      const response = await fetch("/api/createCoffeeStore", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: `${fsq_id}`,
+          name,
+          voting: 0,
+          imgUrl,
+          neighbourhood: neighborhood || "",
+          address: location.formatted_address || "",
+        }),
+      });
+      const dbCoffeeStore = await response.json();
+      console.log("dbCoffeeStore");
+      console.log(dbCoffeeStore);
+    } catch (error) {
+      console.error("Error creating coffee store", error);
     }
-    const {location,  name, neighbourhood, imgUrl} = props.coffeeStore // destructure from props.coffeeStore and it has to be after loading state to give a time to load data first before access 
+  };
 
-    console.log(location, 'location')
-    const handleUpvoteButton = () => {
-        console.log("Handle upvote button")
+  useEffect(() => {
+     //console.log("STep useEffect");
+    // console.log("initialProps.coffeeStore");
+    // console.log(initialProps.coffeeStore);
+    if (isEmpty(initialProps.coffeeStore)) {
+      if (coffeeStores.length > 0) {
+        console.log("true, more stores found");
+        const coffeeStoreFromContext = coffeeStores.find((coffeeStore) => {
+          // if (coffeeStore.fsq_id.toString() === fsq_id) {
+          //   console.log("found fsq_id", fsq_id);
+          //   console.log("coffee store 97", coffeeStore);
+          // }
+
+          return coffeeStore.fsq_id.toString() === fsq_id; //dynamic [id]
+        });
+
+        // return {
+        //   props: {
+        //     coffeeStore: coffeeStoreFromContext ? coffeeStoreFromContext : {},
+        //   },
+        // };
+        if (coffeeStoreFromContext) {
+          // console.log(coffeeStoreFromContext);
+          setCoffeeStore(coffeeStoreFromContext);
+          handleCreateCoffeeStore(coffeeStoreFromContext);
+        }
+      }
+    } else {
+      // SSR - Server Side Rendering
+      // the Stores loaded as default (without searching)
+      handleCreateCoffeeStore(initialProps.coffeeStore);
+      console.log('entered else statement in [id].js line 135');
     }
+  }, [fsq_id, coffeeStores, initialProps, initialProps.coffeeStore]);
 
+  if (router.isFallback === true) {
+    return <div>Loading...</div>;
+  }
 
+  if (coffeeStore) {
+    const { address, location, name, imgUrl } = coffeeStore;
+    console.log(coffeeStore, 'addresss');
     return (
-        <div className={styles.layout}>
-            <Head>
-                <title>{name}</title>
-            </Head>
-            <div className={styles.container}>
-                <div className={styles.col1}>
-                    <div className={styles.backToHomeLink}>
-                        {/* Coffe Store Page {router.query.id}  */}
-                       
-
-                        <Link href="/"><a>&#8666;  Back to Home</a></Link>
-                    </div>
-                    <div className={styles.nameWrapper}>
-                        <h1 className={styles.name}>{name}</h1>
-                    </div>
-                    <Image src={imgUrl || 'https://images.unsplash.com/photo-1498804103079-a6351b050096?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2468&q=80'} width={600} height={360} className={styles.storeImg} alt={name}/>
-                </div>
-                 <div className={cls("glass", styles.col2)}>
-                    <div className={styles.iconWrapper}>
-                        <Image src="/static/icons/pinDrop.svg" width="24" height="24" className={styles.icon} alt=""/>
-                        <p className={styles.text}>{ location.address }</p>
-                    </div>
-                    { location.neighborhood &&
-                    <div className={styles.iconWrapper}>
-                        <Image src="/static/icons/nearMe.svg" width="24" height="24" className={styles.icon} alt=""/>
-                        <p className={styles.text}>{location.neighborhood}</p>
-                    </div>
-                    }
-                    <div className={styles.iconWrapper}>
-                        <Image src="/static/icons/thumbUp.svg" width="24" height="24" className={styles.icon} alt=""/>
-                        <p className={styles.text}>1</p>
-                    </div>
-
-                    <button className={styles.upvoteButton} onClick={handleUpvoteButton}>Up Vote!</button>
-                </div>
+      <div className={styles.layout}>
+        <Head>
+          <title>{name}</title>
+        </Head>
+        <div className={styles.container}>
+          <div className={styles.col1}>
+            <div className={styles.backToHomeLink}>
+              <Link href="/">
+                <a>
+                  ←{" "}
+                  <span style={{ textDecoration: "underline" }}>
+                    Back to Home
+                  </span>
+                </a>
+              </Link>
             </div>
+            <div className={styles.nameWrapper}>
+              <h1>{name}</h1>
+            </div>
+            <Image
+              src={
+                imgUrl ||
+                "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
+              }
+              width={600}
+              height={360}
+              className={styles.storeImg}
+              alt={name}
+            />
+          </div>
+          {/* Col 2 */}
+          <div className={cls("glass", styles.col2)}>
+            <div className={styles.iconWrapper}>
+              <Image
+                src="/static/icons/pinDrop.svg"
+                width={24}
+                height={24}
+                alt="Icon"
+              />
+              <p className={styles.text}>{address}</p>
+            </div>
+            {location?.neighborhood && (
+              <div className={styles.iconWrapper}>
+                <Image
+                  src="/static/icons/nearMe.svg"
+                  width={24}
+                  height={24}
+                  alt="Icon"
+                />
+                <p className={styles.text}>{location.neighborhood}</p>
+              </div>
+            )}
+
+            <div className={styles.iconWrapper}>
+              <Image
+                src="/static/icons/thumbUp.svg"
+                width={24}
+                height={24}
+                alt="Icon"
+              />
+              <p className={styles.text}>{votingCount}</p>
+            </div>
+            <button
+              className={styles.upvoteButton}
+              onClick={handleUpvoteButton}
+            >
+              Upvote
+            </button>
+          </div>
         </div>
-    )
-}
+      </div>
+    );
+  } else {
+    return (
+      <div className={styles.layout}>
+        <Head>
+          <title>{name}</title>
+        </Head>
+        <div className={styles.container}>
+          <div className={styles.col1}>
+            <div className={styles.backToHomeLink}>
+              <Link href="/">
+                <a>
+                  ←{" "}
+                  <span style={{ textDecoration: "underline" }}>
+                    Back to Home
+                  </span>
+                </a>
+              </Link>
+            </div>
+          </div>
+          {/* Col 2 */}
+        </div>
+      </div>
+    );
+  }
+};
+
+export default CoffeeStore;
