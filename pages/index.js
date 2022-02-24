@@ -12,7 +12,7 @@ import useTrackLocation from '../hooks/use-track-location';
 
 //import coffeeStoresData from '../data/coffee-stores.json'; //json static data with resturants releted to coffee
 import { fetchCoffeeStores } from '../lib/coffee-stores';
-import { ACTION_TYPES, StoreContext } from './_app';
+import { ACTION_TYPES, StoreContext } from '../store/store-context';
 
 
 export async function getStaticProps(context) { // get static properties is a function that is called when the page is loaded and return the props, so it mean that the page is loaded and the data is ready to be used. Render method is: SSG static side generation.
@@ -45,17 +45,18 @@ export default function Home(props) {
       if(latLong) {
         try {
           
-          const fetchedCoffeeStores = await fetchCoffeeStores(latLong, 30);
-          console.log( 'fetchedCoffeeStores at index.js line 51', {fetchedCoffeeStores},)
+          const response = await fetch(`/api/getCoffeeStoresByLocation?latLong=${latLong}&limit=30`, )
           
-          //set coffee stores
-          //setCoffeeStores(fetchedCoffeeStores)
+          
+          const coffeeStores = await response.json()
+         
           dispatch({
             type: ACTION_TYPES.SET_COFFEE_STORES,
             payload: {
-              coffeeStores: fetchedCoffeeStores,
+              coffeeStores,
             },
           });
+          setCoffeeStoresError("")
         } catch (error) {
          // console.log({error})
          setCoffeeStoresError(error.message)

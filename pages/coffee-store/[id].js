@@ -4,14 +4,13 @@ import Head from "next/head"
 import Image from "next/image"
 
 //import coffeeStoresData from "../../data/coffee-stores.json"
-import Router from "next/router"
 
 //css
 import styles from "./coffe-store.module.css"
 import cls from 'classnames'
 
 import { fetchCoffeeStores } from "../../lib/coffee-stores"
-import { StoreContext } from '../_app'
+import { StoreContext } from '../../store/store-context'
 import {useContext, useState, useEffect} from 'react'
 import { isEmpty } from "../../utils";
 
@@ -52,15 +51,21 @@ export async function getStaticPaths() {
 
 const CoffeeStore = (initialProps) => {
   const router = useRouter();
-
+ // console.log(router.query , 'line 54 [id]')
   const fsq_id = router.query.id;
-  console.log({ fsq_id });
+  //console.log( fsq_id);
 
   // get props from intialProps and the found ones
 
-  // console.log({ coffeeStore });
+  console.log(initialProps.coffeeStore, 'line 58 coffeeStore');
 
-  const [coffeeStore, setCoffeeStore] = useState(initialProps.coffeeStore);
+ 
+  
+  const [coffeeStore, setCoffeeStore] = useState(
+    initialProps.coffeeStore || {}
+    );
+  
+  
   const {
     state: { coffeeStores },
   } = useContext(StoreContext);
@@ -77,25 +82,23 @@ const CoffeeStore = (initialProps) => {
     try {
       console.log("coffeeStore");
       console.log(coffeeStore);
-      const { fsq_id, name, voting, location, imgUrl, neighborhood, address } =
-        coffeeStore;
+      const { id, name, voting,  imgUrl, neighborhood, address } = coffeeStore;
       const response = await fetch("/api/createCoffeeStore", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id: `${fsq_id}`,
+          id,
           name,
           voting: 0,
           imgUrl,
           neighbourhood: neighborhood || "",
-          address: location.formatted_address || "",
+          address: address || "",
         }),
       });
       const dbCoffeeStore = await response.json();
-      console.log("dbCoffeeStore");
-      console.log(dbCoffeeStore);
+      console.log("dbCoffeeStore ind [id] line 101", dbCoffeeStore);
     } catch (error) {
       console.error("Error creating coffee store", error);
     }
@@ -104,7 +107,7 @@ const CoffeeStore = (initialProps) => {
   useEffect(() => {
      //console.log("STep useEffect");
     // console.log("initialProps.coffeeStore");
-    // console.log(initialProps.coffeeStore);
+     console.log("[id] initial props line 110",initialProps.coffeeStore);
     if (isEmpty(initialProps.coffeeStore)) {
       if (coffeeStores.length > 0) {
         console.log("true, more stores found");
@@ -142,7 +145,7 @@ const CoffeeStore = (initialProps) => {
 
   if (coffeeStore) {
     const { address, location, name, imgUrl } = coffeeStore;
-    console.log(coffeeStore, 'addresss');
+    
     return (
       <div className={styles.layout}>
         <Head>
@@ -243,3 +246,5 @@ const CoffeeStore = (initialProps) => {
 };
 
 export default CoffeeStore;
+
+// We used Context for CSR (Client Side Rendering)using Dynamic routes to get the coffeeStore data from  the server when 
