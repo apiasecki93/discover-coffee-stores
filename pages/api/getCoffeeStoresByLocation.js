@@ -11,7 +11,7 @@ const getCoffeeStoresByLocation = async (req, res) => {
         res.status(200);
         res.json(response);
     } catch (err) {
-        console.log(`this is the error at api/getCoffeeStores line 12`, err)
+        //console.log(`this is the error at api/getCoffeeStores line 12`, err)
         res.status(500);
         res.json({message: "Oh no! Something went wrong", err});
     }

@@ -20,7 +20,7 @@ export async function getStaticProps(context) { // get static properties is a fu
   //console.log("THIS WILL BE PRINTED ONLY AT SERWER SITE BY NODE.JS")
  
   const coffeeStores = await fetchCoffeeStores(); 
-  console.log(coffeeStores, 'index.js line 23 coffeeStores') 
+  //console.log(coffeeStores, 'index.js line 23 coffeeStores') 
   return {
     props: { coffeeStores: coffeeStores },
   }; // will be passed to the page as props
@@ -37,8 +37,8 @@ export default function Home(props) {
   const { dispatch, state } = useContext(StoreContext)
 
   const { coffeeStores, latLong } = state
-  console.log(coffeeStores, latLong , 'index.js line 42 coffeeStores')
-  console.log(props , 'props passed from getStaticProps at index.js line 41')
+  //console.log(coffeeStores, latLong , 'index.js line 42 coffeeStores')
+  //console.log(props , 'props passed from getStaticProps at index.js line 41')
   useEffect( () => {
     //self invoke async function
     const setCoffeeStoresByLocation = async () => {
@@ -107,7 +107,7 @@ export default function Home(props) {
 
         {props.coffeeStores.length > 0 && (
           <div className={styles.sectionWrapper}>
-            <h2 className={styles.heading2}>Toronto stores</h2>
+            <h2 className={styles.heading2}>Boxtel stores</h2>
             <div className={styles.cardLayout}>
               {props.coffeeStores.map((coffeeStore) => {
                 return (

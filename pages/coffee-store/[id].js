@@ -2,8 +2,7 @@ import { useRouter } from "next/router"
 import Link from "next/link"
 import Head from "next/head"
 import Image from "next/image"
-
-//import coffeeStoresData from "../../data/coffee-stores.json"
+import useSWR from "swr"
 
 //css
 import styles from "./coffe-store.module.css"
@@ -12,18 +11,18 @@ import cls from 'classnames'
 import { fetchCoffeeStores } from "../../lib/coffee-stores"
 import { StoreContext } from '../../store/store-context'
 import {useContext, useState, useEffect} from 'react'
-import { isEmpty } from "../../utils";
+import { isEmpty, fetcher } from "../../utils";
 
 
 
 export async function getStaticProps(staticProps) {
   const params = staticProps.params;
-  console.log("params");
-  console.log(params);
+  //console.log("params");
+  //console.log(params);
 
   const coffeeStores = await fetchCoffeeStores();
   const findCoffeeStoreById = coffeeStores.find((coffeeStore) => {
-    return coffeeStore.fsq_id.toString() === params.id; //dynamic [id]
+    return coffeeStore.id.toString() === params.id; //dynamic [id]
   });
   return {
     props: {
@@ -33,12 +32,12 @@ export async function getStaticProps(staticProps) {
 }
 
 export async function getStaticPaths() {
-  console.log("STep getStaticPaths");
+  //console.log("STep getStaticPaths");
   const coffeeStores = await fetchCoffeeStores();
   // console.log(coffeeStores);
   const paths = coffeeStores.map((coffeeStore) => {
     return {
-      params: { id: coffeeStore.fsq_id.toString() },
+      params: { id: coffeeStore.toString() },
     };
   });
   return {
@@ -52,12 +51,12 @@ export async function getStaticPaths() {
 const CoffeeStore = (initialProps) => {
   const router = useRouter();
  // console.log(router.query , 'line 54 [id]')
-  const fsq_id = router.query.id;
-  //console.log( fsq_id);
+  const id = router.query.id;
+  //console.log( id);
 
   // get props from intialProps and the found ones
 
-  console.log(initialProps.coffeeStore, 'line 58 coffeeStore');
+  //console.log(initialProps.coffeeStore, 'line 58 coffeeStore');
 
  
   
@@ -70,18 +69,11 @@ const CoffeeStore = (initialProps) => {
     state: { coffeeStores },
   } = useContext(StoreContext);
 
-  const [votingCount, setVotingCount] = useState(1);
-
-  const handleUpvoteButton = () => {
-    console.log("upvoted");
-    let count = votingCount + 1;
-    setVotingCount(count);
-  };
-
+  
   const handleCreateCoffeeStore = async (coffeeStore) => {
     try {
-      console.log("coffeeStore");
-      console.log(coffeeStore);
+      //console.log("coffeeStore");
+      //console.log(coffeeStore);
       const { id, name, voting,  imgUrl, neighborhood, address } = coffeeStore;
       const response = await fetch("/api/createCoffeeStore", {
         method: "POST",
@@ -98,7 +90,7 @@ const CoffeeStore = (initialProps) => {
         }),
       });
       const dbCoffeeStore = await response.json();
-      console.log("dbCoffeeStore ind [id] line 101", dbCoffeeStore);
+      //console.log("dbCoffeeStore ind [id] line 101", dbCoffeeStore);
     } catch (error) {
       console.error("Error creating coffee store", error);
     }
@@ -107,17 +99,17 @@ const CoffeeStore = (initialProps) => {
   useEffect(() => {
      //console.log("STep useEffect");
     // console.log("initialProps.coffeeStore");
-     console.log("[id] initial props line 110",initialProps.coffeeStore);
+     //console.log("[id] initial props line 110",initialProps.coffeeStore);
     if (isEmpty(initialProps.coffeeStore)) {
       if (coffeeStores.length > 0) {
-        console.log("true, more stores found");
+        //("true, more stores found");
         const coffeeStoreFromContext = coffeeStores.find((coffeeStore) => {
-          // if (coffeeStore.fsq_id.toString() === fsq_id) {
-          //   console.log("found fsq_id", fsq_id);
+          // if (coffeeStore.id.toString() === id) {
+          //   console.log("found id", id);
           //   console.log("coffee store 97", coffeeStore);
           // }
 
-          return coffeeStore.fsq_id.toString() === fsq_id; //dynamic [id]
+          return coffeeStore.id.toString() === id; //dynamic [id]
         });
 
         // return {
@@ -135,9 +127,54 @@ const CoffeeStore = (initialProps) => {
       // SSR - Server Side Rendering
       // the Stores loaded as default (without searching)
       handleCreateCoffeeStore(initialProps.coffeeStore);
-      console.log('entered else statement in [id].js line 135');
+      //console.log('entered else statement in [id].js line 135');
     }
-  }, [fsq_id, coffeeStores, initialProps, initialProps.coffeeStore]);
+  }, [id, coffeeStores, initialProps, initialProps.coffeeStore]);
+
+  const [votingCount, setVotingCount] = useState(0);
+
+
+  const { data, error } = useSWR(`/api/getCoffeeStoreById?id=${id}`, fetcher); //fetcher exported in utils.js
+
+
+useEffect(() => {
+    if (data && data.length > 0) {
+      //console.log('data from SWR', data)
+      setCoffeeStore(data[0])
+      setVotingCount(data[0].voting)
+    }
+}, [data])
+
+
+if (error) {
+  return <div>Something went wrong retreving coffe store page [id] line 148</div>
+}
+
+  const handleUpvoteButton = async () => {
+   // console.log("upvoted");
+
+    try {
+      //console.log("coffeeStore");
+      const response = await fetch("/api/favouriteCoffeeStoreById", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+        }),
+      });
+      const dbCoffeeStore = await response.json(); //dbCoffeeStore return array of objects and it will be empty if the specific request do not go trough
+      //console.log("dbCoffeeStore id [id] line 101", dbCoffeeStore);
+      if (dbCoffeeStore && dbCoffeeStore.length > 0) { // if true then voting count can be incremented
+        let count = votingCount + 1;
+        setVotingCount(count);
+      }
+    } catch (error) {
+        console.error("Error upvoting the coffee store", error);
+    }
+  };
+
 
   if (router.isFallback === true) {
     return <div>Loading...</div>;

@@ -9,7 +9,7 @@ const getUrlForCoffeeStores = (latLong, query, limit) => {
     const response = await fetch(url, header)
     const data = await response.json()
    
-    console.log('DATA: ', data)
+   
    
     const transformedData =
       data?.results?.map((venue) => {
@@ -19,7 +19,7 @@ const getUrlForCoffeeStores = (latLong, query, limit) => {
         }
       }) || []
    
-    console.log('TRANSFORMED DATA: ', transformedData)
+    
    
     return transformedData
   }

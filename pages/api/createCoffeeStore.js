@@ -47,7 +47,7 @@ const createCoffeeStore = async (req, res) => {
                 res.json({ message: "Id is missing"})
             }
         } catch (error) {
-            console.log('error creating or finding store in catch block of createCoffeeStore API', {error})
+            //console.log('error creating or finding store in catch block of createCoffeeStore API', {error})
             res.status(500)
             res.json({message: "error creating or finding store in catch block of createCoffeeStore API"}, {error})
         }

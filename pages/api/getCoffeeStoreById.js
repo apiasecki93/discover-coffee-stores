@@ -1,13 +1,13 @@
-import { table, getMinifiedRecords, findRecordByFilter } from '../../lib/airtable'
+import { findRecordByFilter } from '../../lib/airtable'
 
 
 const getCoffeeStoresById = async (req, res) => {
-    console.log('req',req)
+    //console.log('req',req)
     const {id} = req.query
 
     try {
         if (id) {
-            console.log(id, 'getId api line9')
+            //console.log(id, 'getId api line9')
             const records = await findRecordByFilter(id)
 
 
