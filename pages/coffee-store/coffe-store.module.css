@@ -1,7 +1,7 @@
 .container {
     display: grid;
     padding-top: 1.75rem /* 28px */;
-    padding-bottom: 12.75rem /* 28px */;
+    padding-bottom: 1.75rem /* 28px */;
     padding-left: 1.75rem /* 12px */;
     padding-right: 0.75rem /* 12px */;
   }

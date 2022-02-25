@@ -187,6 +187,8 @@ if (error) {
       <div className={styles.layout}>
         <Head>
           <title>{name}</title>
+          <meta name="description" content={`${name} coffee store`}></meta>
+
         </Head>
         <div className={styles.container}>
           <div className={styles.col1}>
@@ -204,6 +206,7 @@ if (error) {
               <h1>{name}</h1>
             </div>
             <Image
+            alt="banner image"
               src={
                 imgUrl ||
                 "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
@@ -211,17 +214,18 @@ if (error) {
               width={600}
               height={360}
               className={styles.storeImg}
-              alt={name}
+              
             />
           </div>
           {/* Col 2 */}
           <div className={cls("glass", styles.col2)}>
             <div className={styles.iconWrapper}>
               <Image
+              
                 src="/static/icons/pinDrop.svg"
                 width={24}
                 height={24}
-                alt="Icon"
+                alt="Icon pinDrop"
               />
               <p className={styles.text}>{address}</p>
             </div>
@@ -231,7 +235,7 @@ if (error) {
                   src="/static/icons/nearMe.svg"
                   width={24}
                   height={24}
-                  alt="Icon"
+                  alt="Icon nearMe"
                 />
                 <p className={styles.text}>{location.neighborhood}</p>
               </div>
@@ -242,7 +246,7 @@ if (error) {
                 src="/static/icons/thumbUp.svg"
                 width={24}
                 height={24}
-                alt="Icon"
+                alt="Icon thumbUp"
               />
               <p className={styles.text}>{votingCount}</p>
             </div>
